@@ -1,0 +1,16 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "primordial-core"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "matplotlib>=3.8",
+]
+
+[tool.maturin]
+manifest-path = "core/Cargo.toml"
+features = ["pyo3/extension-module", "python"]
+module-name = "primordial_core"

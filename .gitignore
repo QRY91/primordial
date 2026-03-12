@@ -1,0 +1,39 @@
+# Rust
+target/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# PyO3/maturin
+*.so
+*.dylib
+*.pyd
+
+# Logs & run data (generated at runtime)
+logs/
+!logs/.gitkeep
+
+# Database
+*.sqlite
+*.duckdb
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+
+# Misc
+*.zip

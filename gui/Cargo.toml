@@ -1,0 +1,19 @@
+[package]
+name = "primordial-gui"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "primordial-gui"
+path = "src/main.rs"
+
+[dependencies]
+primordial-core = { path = "../core" }
+primordial-common = { path = "../common" }
+eframe = { workspace = true }
+egui_plot = { workspace = true }
+rusqlite = { workspace = true }
+chrono = { workspace = true }
+log = { workspace = true }
+env_logger = { workspace = true }
+serde_json = { workspace = true }

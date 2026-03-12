@@ -1,0 +1,59 @@
+# Phase 1 — World
+# Spatial biomes from star/planet physics, migration, biome specialization
+#
+# 6x6 grid (36 cells), Earth-like star and planet.
+# Temperature gradient from equator to poles creates distinct biomes.
+# Migration costs energy, organisms specialize via heat/moisture tolerance.
+# Weather adds stochastic noise to temperature and moisture.
+
+[simulation]
+seed = 42
+max_ticks = 100_000
+time_compression = 1000
+log_interval = 100
+checkpoint_interval = 10_000
+
+[population]
+initial_size = 200
+max_size = 50_000
+initial_energy = 60.0
+
+[resources]
+initial = 80_000.0
+replenishment_rate = 40_000.0
+max_capacity = 200_000.0
+
+[energy]
+metabolism_scale = 0.15
+base_survival_cost = 1.5
+survival_cost_scale = 0.02
+
+[reproduction]
+energy_cost = 12.0
+child_energy_fraction = 0.4
+
+[lifespan]
+max_age = 120
+
+[lineage]
+divergence_threshold = 8
+snapshot_interval = 1000
+
+[genome]
+seed = 3735928559  # 0xDEADBEEF
+
+[world]
+grid_size = 6
+star_mass = 1.0
+orbital_radius = 1.0
+axial_tilt = 23.5
+hydrosphere = 0.7
+weather_volatility = 0.2
+season_period = 5000
+migration_rate = 0.08
+migration_cost = 3.0
+mismatch_scale = 1.5
+
+[logging]
+dir = "logs"
+extinction_threshold = 0.05

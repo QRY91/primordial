@@ -1,0 +1,24 @@
+[package]
+name = "primordial-core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "primordial_core"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+python = ["dep:pyo3"]
+
+[dependencies]
+pyo3 = { workspace = true, optional = true }
+rayon = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+env_logger = { workspace = true }
+rand = { workspace = true }
+rand_chacha = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+primordial-world = { path = "../world" }

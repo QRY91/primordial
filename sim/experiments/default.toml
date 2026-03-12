@@ -1,0 +1,48 @@
+# Default Phase 0 experiment configuration
+# One biome, resource scarcity + seasonal variation as selection pressure
+#
+# Seasons create boom/bust: peak resources → population explosion → trough → crash
+# Crossover mixes genomes during reproduction
+# max_age forces generational turnover → mutation accumulates
+
+[simulation]
+seed = 42
+max_ticks = 100_000
+time_compression = 1000
+log_interval = 100
+checkpoint_interval = 10_000
+
+[population]
+initial_size = 100
+max_size = 50_000
+initial_energy = 50.0
+
+[resources]
+initial = 50_000.0
+replenishment_rate = 20_000.0
+max_capacity = 100_000.0
+volatility = 0.8           # seasonal swing: replenishment ranges 20%–180% of base
+season_period = 5_000       # one full cycle every 5000 ticks
+
+[energy]
+metabolism_scale = 0.15
+base_survival_cost = 2.0
+survival_cost_scale = 0.03
+
+[reproduction]
+energy_cost = 15.0
+child_energy_fraction = 0.4
+
+[lifespan]
+max_age = 100
+
+[lineage]
+divergence_threshold = 8
+snapshot_interval = 1000
+
+[genome]
+seed = 3735928559  # 0xDEADBEEF
+
+[logging]
+dir = "logs"
+extinction_threshold = 0.05

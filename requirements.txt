@@ -1,0 +1,2 @@
+maturin>=1.7
+matplotlib>=3.8
