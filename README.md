@@ -2,150 +2,189 @@
 
 > The universe called `main()`. This is the wrapper.
 
-A compressed evolutionary simulation. Physical constants seed a star system. A star determines a habitable zone. A planet develops climate. Climate carves biomes. Biomes host organisms. Organisms compete, reproduce, mutate, and die. The phylogenetic tree writes itself.
+An evolutionary simulation. Physical constants seed a star system. A star determines a habitable zone. A planet develops climate. Climate carves biomes. Biomes host organisms. Organisms compete, reproduce, mutate, and die. The phylogenetic tree writes itself.
 
 Nobody hardcodes the outcomes.
-
----
-
-## What This Is
-
-`primordial` is a multi-scale evolutionary simulation focused on **emergent complexity over directed design**. The goal is not biological accuracy — it's to watch selection logic operate: extinction, recovery, divergence, the occasional Cambrian moment when cleared fitness landscape suddenly fills.
-
-The phylogenetic tree is the primary artifact. Living organisms at any given tick are less interesting than the history of what survived, what didn't, and why.
-
----
-
-## Architecture Overview
-
-```
-primordial/
-├── core/               # Rust — hot path (organism ticks, selection, population)
-│   ├── src/
-│   │   ├── organism.rs
-│   │   ├── genome.rs
-│   │   ├── population.rs
-│   │   ├── selection.rs
-│   │   └── lib.rs
-├── world/              # Rust — environment (climate, biome, physics)
-│   ├── src/
-│   │   ├── universe.rs
-│   │   ├── star.rs
-│   │   ├── planet.rs
-│   │   ├── climate.rs
-│   │   └── biome.rs
-├── sim/                # Python — orchestration, config, experiment management
-│   ├── main.py
-│   ├── config.py
-│   └── experiments/
-├── viz/                # Python — phylogenetic rendering, analysis, dashboards
-│   ├── phylo.py
-│   ├── climate_replay.py
-│   └── dashboard.py
-├── logs/               # Simulation output
-│   ├── phylogenetic_tree.json
-│   ├── extinction_events.log
-│   ├── climate_history.csv
-│   └── dominant_genomes.json
-├── NORTHSTAR.md        # Vision and philosophy — read before contributing
-├── ROADMAP.md          # Phased development plan
-└── CLAUDE.md           # Instructions for Claude Code
-```
 
 ---
 
 ## Quick Start
 
 ### Prerequisites
-- Python 3.11+
-- Rust (stable, via rustup)
-- [PyO3](https://pyo3.rs) for the Rust/Python bridge
+- Rust (stable, via [rustup](https://rustup.rs))
+- Python 3.11+ (optional — for matplotlib dashboard and PyO3 bindings)
 
-### Setup
+### Build
 
 ```bash
-# Clone
-git clone https://github.com/yourname/primordial
+git clone https://github.com/QRY91/primordial
 cd primordial
 
-# Python environment
+# Build CLI + GUI
+cargo build --release
+```
+
+### Run a Simulation
+
+```bash
+# Via CLI
+./target/release/primordial run -c sim/experiments/phase1.toml --max-ticks 5000
+
+# List past runs
+./target/release/primordial ls
+
+# Show details of a run
+./target/release/primordial show 1
+
+# Generate matplotlib dashboard PNG
+./target/release/primordial dashboard 1
+```
+
+### GUI
+
+```bash
+./target/release/primordial-gui
+```
+
+The GUI provides:
+- **Run list** — browse all past simulations from shared SQLite database
+- **Spatial grid map** — 6×6 biome-colored cells with live population density heatmap
+- **6 interactive charts** — population, birth/death rates, trait evolution, genome diversity, biome populations, migrations (zoom/pan)
+- **Live updating** — charts and grid map update in real-time during simulation
+- **Run comparison** — overlay two runs' curves to compare outcomes
+- **Config editor** — edit TOML config in-GUI with live validation, run directly
+
+### Python Path (optional)
+
+For the matplotlib dashboard or to run simulations via Python:
+
+```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-
-# Build Rust core
-cd core && cargo build --release && cd ..
-cd world && cargo build --release && cd ..
-
-# Run
-python sim/main.py --config sim/experiments/default.toml
+pip install maturin
+maturin develop --release
+.venv/bin/python sim/main.py --config sim/experiments/phase1.toml --max-ticks 5000
 ```
 
-### First Run Output
+---
+
+## Architecture
 
 ```
-[tick 0]      universe initialized. seed=42. constants locked.
-[tick 1]      star ignited. luminosity=1.0 sol. habitable zone: 0.95–1.37 AU
-[tick 12]     planet settled at 1.02 AU. hydrosphere forming.
-[tick 340]    first biomes stable. 3 zones active.
-[tick 1,200]  first organisms seeded. genome_length=64bit.
-[tick 8,400]  population: 12,400. lineages: 7.
-[tick 23,100] extinction event. volcanic. diversity: -84%.
-[tick 23,800] recovery underway. 3 lineages survived.
-              (this is where it gets interesting)
+primordial/
+├── core/           Rust — simulation engine
+│   └── src/
+│       ├── genome.rs       64-bit packed genome with 6 trait fields
+│       ├── organism.rs     energy, age, reproduction, cell placement
+│       ├── population.rs   tick loop: replenish → consume → cull → migrate → reproduce
+│       ├── selection.rs    resource pools, scarcity math
+│       ├── lineage.rs      divergence tracking, NDJSON event logging
+│       └── python.rs       PyO3 bindings (feature-gated)
+├── world/          Rust — environment model
+│   └── src/
+│       ├── star.rs         mass → luminosity, habitable zone
+│       ├── planet.rs       orbital mechanics, equilibrium temperature
+│       ├── climate.rs      latitude/longitude grid, seasonal cycles, weather
+│       └── biome.rs        classification (tropical → ice), productivity
+├── common/         Rust — shared config parsing + SQLite helpers
+├── cli/            Rust — terminal binary (run/ls/show/dashboard)
+├── gui/            Rust — egui desktop app with live charts + grid map
+├── sim/            Python — orchestration, config, SQLite storage
+├── viz/            Python — matplotlib 6-panel dashboard
+└── logs/           Per-run subdirectories + shared primordial.sqlite
 ```
+
+### Workspace Crates
+
+| Crate | Purpose |
+|-------|---------|
+| `primordial-core` | Simulation engine — genome, organism, population, lineage, selection |
+| `primordial-world` | Star → planet → climate → biome pipeline |
+| `primordial-common` | TOML config parsing, SQLite schema + query helpers |
+| `primordial` (cli) | Terminal binary with 4 subcommands |
+| `primordial-gui` | egui desktop app with interactive charts |
+
+---
+
+## How It Works
+
+### Genome
+
+Each organism carries a 64-bit genome with 6 evolvable trait fields:
+
+| Bits | Trait | Controls |
+|------|-------|----------|
+| 0–7 | Metabolism | Energy extraction rate (higher = more food but higher cost) |
+| 8–15 | Repro threshold | Energy needed before reproduction triggers |
+| 16–23 | Mutation rate | Per-bit flip probability during reproduction |
+| 24–31 | Mobility | Migration probability + energy cost |
+| 32–39 | Heat tolerance | Optimal temperature (-30°C to +50°C) |
+| 40–47 | Moisture preference | Optimal moisture level (0.0 to 1.0) |
+
+Mutation flips individual bits. Crossover swaps random byte-aligned segments between parents sharing a cell.
+
+### World Model
+
+A star's mass determines luminosity. Orbital radius and luminosity set equilibrium temperature. Axial tilt drives seasonal amplitude. A grid of cells gets latitude-based temperature gradients and longitude-wrapped moisture patterns. Each cell is classified into one of 6 biomes (tropical, desert, temperate forest, grassland, tundra, ice) with biome-specific resource productivity.
+
+### Selection
+
+Resources replenish per-cell based on biome productivity. Organisms consume resources proportional to metabolism. When resources are scarce, high-metabolism organisms pay more than they gain. Organisms that can't cover survival costs die. Those with enough energy reproduce — children inherit mutated genomes and stay in the parent's cell. Migration moves organisms between adjacent cells based on mobility trait.
+
+Biome mismatch penalizes organisms whose heat tolerance / moisture preference doesn't match their cell's conditions, creating selective pressure for local adaptation and niche specialization.
+
+### Lineage Tracking
+
+A new lineage is assigned when a child's genome diverges from its parent by more than a configurable Hamming distance threshold. This produces a meaningful phylogenetic tree that tracks actual genetic divergence, not just reproduction events.
 
 ---
 
 ## Configuration
 
-Simulations are defined in TOML:
+Simulations are defined in TOML. See [`sim/experiments/phase1.toml`](sim/experiments/phase1.toml) for a full example.
 
 ```toml
-[universe]
-seed = 42
-time_compression = 1000  # 1 tick = N years
-
-[star]
-mass = 1.0               # solar masses
-spectral_class = "G"
-
-[planet]
-orbital_radius = 1.02    # AU
-axial_tilt = 23.5        # degrees
-hydrosphere = 0.71       # surface fraction
-
 [simulation]
-max_ticks = 1_000_000
-checkpoint_interval = 10_000
-extinction_threshold = 0.05  # population fraction triggers event logging
+seed = 42
+max_ticks = 100000
+log_interval = 100
+
+[population]
+initial_size = 200
+max_size = 50000
+
+[world]
+grid_size = 6
+star_mass = 1.0
+orbital_radius = 1.0
+axial_tilt = 23.5
+hydrosphere = 0.7
+weather_volatility = 0.2
+migration_rate = 0.08
+migration_cost = 3.0
+mismatch_scale = 1.5
+
+[resources]
+initial = 80000
+replenishment_rate = 8000
+max_capacity = 200000
 ```
 
 ---
 
-## Output and Observation
+## Storage
 
-The primary output is the **phylogenetic tree** — a JSON log of every lineage: when it emerged, from what ancestor, how long it persisted, and what killed it.
+All interfaces (CLI, GUI, Python) share a single SQLite database at `logs/primordial.sqlite`:
+- **runs** table — metadata, config, timing, final state
+- **tick_summaries** table — population, births, deaths, diversity, biome populations per logged tick
 
-```json
-{
-  "lineage_id": "L-0042",
-  "emerged_tick": 8400,
-  "parent": "L-0007",
-  "genome_snapshot": "01101001...",
-  "dominant_biome": "temperate_shallow",
-  "extinction_tick": 23100,
-  "cause": "volcanic_winter",
-  "descendants_surviving": 2
-}
-```
-
-A live dashboard (`viz/dashboard.py`) renders the tree as it grows and prunes.
+Lineage events are stored as NDJSON files in per-run subdirectories (`logs/YYYYMMDD_HHMMSS_seedN/`) — different data shape, different storage.
 
 ---
 
 ## Philosophy
 
-See `NORTHSTAR.md`.
+See [`NORTHSTAR.md`](NORTHSTAR.md).
 
 The short version: this is a meditation with a compiler. We're not building a game or a biology textbook. We're building something that makes the question *"at what point does a record become a perceiver?"* feel like it has skin in the game.
